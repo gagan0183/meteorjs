@@ -1,22 +1,36 @@
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
+import { Mongo } from 'meteor/mongo';
 
 import './main.html';
 
-Template.hello.onCreated(function helloOnCreated() {
-  // counter starts at 0
-  this.counter = new ReactiveVar(0);
+Users = new Meteor.Collection('users');
+Hist = new Meteor.Collection('history');
+
+Meteor.subscribe('allUsers');
+Meteor.subscribe('allHistories');
+
+Template.userDetails.helpers({
+  user: function() {
+    return Users.findOne();
+  }
 });
 
-Template.hello.helpers({
-  counter() {
-    return Template.instance().counter.get();
-  },
+Template.history.helpers({
+  historyItem: function() {
+    return Hist.find({}, {sort: {date: -1}, limit: 3});
+  }
 });
 
-Template.hello.events({
-  'click button'(event, instance) {
-    // increment the counter when button is clicked
-    instance.counter.set(instance.counter.get() + 1);
-  },
+Template.userDetails.events({
+  'click #addAmount': function(e) {
+    e.preventDefault();
+    var amount = parseInt($('#amount').val());
+    Users.update(this._id,{$inc: {total: amount}});
+    Hist.insert({
+      value: amount,
+      date: new Date().toTimeString(),
+      userId: this._id
+    });
+  }
 });
