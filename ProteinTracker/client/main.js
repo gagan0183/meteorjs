@@ -15,6 +15,14 @@ ProteinData.deny({
   }
 });
 
+ProteinData.allow({
+  insert: function(userId, data) {
+    if(data.userId === userId)
+      return true;
+    return false;
+  }
+});
+
 Meteor.subscribe('allProteinData');
 Meteor.subscribe('allHistories');
 

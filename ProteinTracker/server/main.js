@@ -6,6 +6,7 @@ Hist = new Meteor.Collection('history');
 
 Meteor.methods({
   proteins: function(amount) {
+    console.log(amount);
     ProteinData.update({userId: this.userId}, {$inc: {total: amount}});
     Hist.insert({
       value: amount,
