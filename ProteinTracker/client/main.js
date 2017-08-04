@@ -4,15 +4,44 @@ import { Mongo } from 'meteor/mongo';
 
 import './main.html';
 
-Users = new Meteor.Collection('users');
+ProteinData = new Meteor.Collection('protein_data');
 Hist = new Meteor.Collection('history');
 
-Meteor.subscribe('allUsers');
+ProteinData.deny({
+  update: function(userId, data) {
+    if(data.total < 0) 
+      return true;
+    return false;
+  }
+});
+
+Meteor.subscribe('allProteinData');
 Meteor.subscribe('allHistories');
+
+Deps.autorun(function() {
+  if(Meteor.user()) {
+    console.log('user log in : ' + Meteor.user().profile.name);
+  }
+  else {
+    console.log('user log out');
+  }
+});
 
 Template.userDetails.helpers({
   user: function() {
-    return Users.findOne();
+    var data = ProteinData.findOne();
+    if(!data) {
+      data = {
+        userId: Meteor.userId(),
+        total: 0,
+        goal: 200
+      };
+      ProteinData.insert(data);
+    }
+    return data;
+  },
+  lastAmount: function() {
+    return Session.get('lastAmount');
   }
 });
 
@@ -26,11 +55,16 @@ Template.userDetails.events({
   'click #addAmount': function(e) {
     e.preventDefault();
     var amount = parseInt($('#amount').val());
-    Users.update(this._id,{$inc: {total: amount}});
-    Hist.insert({
-      value: amount,
-      date: new Date().toTimeString(),
-      userId: this._id
+    Meteor.call('proteins', amount, function(e, id) {
+      if(e) {
+        return alert(e.reason);
+      }
     });
+
+    Session.set('lastAmount', amount);
+  },
+  'click #quickSubtract': function(e) {
+    e.preventDefault();
+    ProteinData.update(this._id, {$inc: {total: -100}});
   }
 });

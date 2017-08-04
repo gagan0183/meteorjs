@@ -1,36 +1,30 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 
-Users = new Meteor.Collection('users');
+ProteinData = new Meteor.Collection('protein_data');
 Hist = new Meteor.Collection('history');
+
+Meteor.methods({
+  proteins: function(amount) {
+    ProteinData.update({userId: this.userId}, {$inc: {total: amount}});
+    Hist.insert({
+      value: amount,
+      date: new Date().toTimeString(),
+      userId: this.userId
+    });
+  }
+});
 
 Meteor.startup(() => {
 
-  Meteor.publish('allUsers', function() {
-    return Users.find();
+  Meteor.publish('allProteinData', function() {
+    return ProteinData.find({userId: this.userId});
   });
 
   Meteor.publish('allHistories', function() {
-    return Hist.find();
+    return Hist.find({userId: this.userId});
   });
   
   
   // code to run on server at startup
-  if(Users.find().count() === 0) {
-    Users.insert({
-      total: 123,
-      goal: 300
-    });
-  }
-
-  if(Hist.find().count() === 0) {
-    Hist.insert({
-      value: 30,
-      date: new Date().toTimeString()
-    });
-    Hist.insert({
-      value: 111,
-      date: new Date().toTimeString()
-    });
-  }
 });
